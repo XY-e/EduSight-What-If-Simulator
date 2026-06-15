@@ -14,6 +14,13 @@ from risk_engine import (
     Trend,
 )
 
+import requests
+import os
+
+CLOUD_REC_API = os.getenv(
+    "CLOUD_REC_API",
+    "http://localhost:8000/api/recommendation"
+)
 
 # ─────────────────────────────────────────────
 #  Domain types
@@ -76,38 +83,6 @@ FAMILY_LOW          = 45.0
 # ─────────────────────────────────────────────
 
 class RecommendationEngine:
-    """
-    Rule-based recommendation engine with simulation-aware re-ranking.
-
-    When a SimulationResult is supplied, the engine boosts recommendations
-    whose intervention category drove the most score reduction.
-
-    Usage (standalone)
-    ------------------
-    rec_engine = RecommendationEngine()
-    report = rec_engine.recommend(student, risk_score)
-
-    Usage (with simulation)
-    -----------------------
-    report = rec_engine.recommend(student, risk_score,
-                                  sim_input=sim_input,
-                                  sim_result=sim_result)
-
-    Full pipeline (risk_engine + recommendation_engine together)
-    ------------------------------------------------------------
-    from risk_engine import RiskEngine, StudentProfile, SimulationInput, Trend
-    from recommendation_engine import RecommendationEngine
-
-    risk_engine = RiskEngine()           # or RiskEngine(ml_model_path="edusight_ml_model.joblib")
-    rec_engine  = RecommendationEngine()
-
-    student    = StudentProfile(...)
-    risk_score = risk_engine.score(student)
-    sim_result = risk_engine.simulate(student, SimulationInput(...))
-    report     = rec_engine.recommend(student, risk_score,
-                                      sim_input=SimulationInput(...),
-                                      sim_result=sim_result)
-    """
 
     def recommend(
         self,
@@ -144,6 +119,58 @@ class RecommendationEngine:
             priority_action = priority_action,
         )
 
+    def recommend_from_cloud(
+        self,
+        student: StudentProfile,
+        risk_score: RiskScore,
+        sim_input: Optional[SimulationInput] = None,
+    ):
+        """
+        Request recommendations from cloud service.
+        """
+
+        payload = {
+            "student": {
+                "student_id": student.student_id,
+                "name": student.name,
+                "grade": student.grade,
+                "attendance_rate": student.attendance_rate,
+                "academic_score": student.academic_score,
+                "socio_score": student.socio_score,
+                "family_support": student.family_support,
+                "trend": student.trend.value,
+            },
+            "risk_score": risk_score.total_score,
+            "risk_level": risk_score.risk_level.value,
+        }
+
+        if sim_input:
+            payload["simulation"] = {
+                "attendance_boost": sim_input.attendance_boost,
+                "academic_boost": sim_input.academic_boost,
+                "counselling_sessions": sim_input.counselling_sessions,
+                "welfare_support": sim_input.welfare_support,
+            }
+
+        try:
+            response = requests.post(
+                f"{CLOUD_REC_API}/generate",
+                json=payload,
+                timeout=10,
+            )
+
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.RequestException as e:
+            print(f"[Cloud Recommendation API] {e}")
+
+            return {
+                "success": False,
+                "error": str(e),
+            }
+    
     # ── rule sets ───────────────────────────
 
     def _attendance_rules(self, s, rs) -> list:
