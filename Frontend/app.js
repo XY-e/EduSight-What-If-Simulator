@@ -61,14 +61,18 @@ async function loadStudentData(studentId = selectedStudentId) {
 
     const data = await response.json();
 
-    currentStudent = {
-      id: data.id || data.student_id || studentId,
-      name: data.name,
-      form: data.form || data.grade,
-      school: data.school,
-      currentScore: data.currentScore || data.current_score || 89,
-      currentRisk: data.currentRisk || data.current_risk || "High Risk"
-    };
+  currentStudent = {
+    id: data.id || data.student_id || studentId,
+    name: data.name,
+    form: data.form || data.grade,
+    school: data.school,
+    currentScore: data.currentScore ?? data.current_score,
+    currentRisk: data.currentRisk ?? data.current_risk,
+    attendance: data.attendance,
+    grades: data.grades,
+    counselling: data.counselling ?? 0,
+    welfare: data.welfare ?? 0
+  };
 
     displayStudentProfile(currentStudent);
   } catch (error) {
@@ -86,10 +90,10 @@ async function loadStudentData(studentId = selectedStudentId) {
   }
 
   defaultInputs = {
-    attendance: currentStudent.attendance || 62,
-    grades: currentStudent.grades || 60,
-    counselling: currentStudent.counselling || 0,
-    welfare: currentStudent.welfare || 0
+    attendance: currentStudent.attendance ?? 62,
+    grades: currentStudent.grades ?? 60,
+    counselling: currentStudent.counselling ?? 0,
+    welfare: currentStudent.welfare ?? 0
   };
 
   resetSlidersToStudentDefault();
@@ -340,7 +344,7 @@ function updateSimulationUI(result) {
     `${result.dropoutProbability}%`;
 
   document.getElementById("probabilityMessage").textContent =
-    result.narrative || "";
+    result.narrative || result.probabilityText || "";
 
   document.getElementById("insightText").textContent =
     result.insightText;
@@ -583,10 +587,18 @@ function generateMockSimulationResult(inputs) {
 
   score = Math.round(Math.max(1, Math.min(100, score)));
 
-  const improvement = baselineScore - score;
+  const change = baselineScore - score;
 
-  let riskLevel = "High Dropout Risk";
-  let riskLabel = "high risk";
+  let scoreChangeText = "No change";
+
+  if (change > 0) {
+    scoreChangeText = `↓ ${change} pts`;
+  } else if (change < 0) {
+    scoreChangeText = `↑ ${Math.abs(change)} pts`;
+  }
+
+  let riskLevel;
+  let riskLabel;
 
   if (score < 40) {
     riskLevel = "Low Dropout Risk";
@@ -594,6 +606,9 @@ function generateMockSimulationResult(inputs) {
   } else if (score < 65) {
     riskLevel = "Moderate Dropout Risk";
     riskLabel = "medium risk";
+  } else {
+    riskLevel = "High Dropout Risk";
+    riskLabel = "high risk";
   }
 
   return {
@@ -601,13 +616,15 @@ function generateMockSimulationResult(inputs) {
     projectedScore: score,
     riskLevel,
     riskLabel,
-    scoreChangeText: improvement > 0 ? `↓ ${improvement} pts` : "No change",
+    scoreChangeText,
     dropoutProbability: score >= 70 ? 90 : score >= 40 ? 55 : 20,
     narrative:
       "At the ongoing trajectory, Muhammad Ali is at high risk of dropping out within 3 months. Immediate action is recommended.",
     insightText:
-      improvement > 0
-        ? `Simulation indicates a ${improvement} point improvement compared to the current baseline if interventions are applied.`
+      change > 0
+        ? `Simulation indicates a ${change} point improvement compared to the current baseline if interventions are applied.`
+        : change < 0
+        ? `Simulation indicates a ${Math.abs(change)} point increase in risk compared to the current baseline.`
         : "Simulation indicates no major improvement compared to the current baseline.",
     weights: {
       attendance: 45,
