@@ -506,60 +506,15 @@ input[type="range"] {
   font-size: inherit;
 }
 
-/* .mini-effect {
-  height: 160px;
-  margin-top: 22px;
-  position: relative;
-  overflow: hidden;
-} */
-
 /* Weights */
-.weight-item {
-  margin-top: 22px;
-}
-
-.weight-item p {
-  display: flex;
-  justify-content: space-between;
-  margin: 0 0 8px;
-  font-size: 15px;
-}
-
-.weight-bar {
-  height: 10px;
-  background: #e6e4ee;
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.weight-bar .fill {
-  display: block;
-  height: 100%;
-  border-radius: 20px;
-}
-
-.fill.attendance {
-  width: 45%;
-  background: #ff3d3d;
-}
-
-.fill.academic {
-  width: 29%;
-  background: #ffd85c;
-}
-
-.fill.socio {
-  width: 13%;
-  background: #6ca7ff;
-}
-
-.fill.family {
-  width: 12%;
-  background: #a7f542;
+.risk-chart-box {
+  height: 300px;
+  width: 100%;
+  margin-top: 10px;
 }
 
 .weights-footer {
-  margin-top: 140px;
+  margin-top: 70px;
   padding-top: 14px;
   border-top: 1.5px solid #e6e4ee;
 }
