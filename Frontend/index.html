@@ -310,48 +310,8 @@
             <span class="warning-icon">⚠</span>
           </div>
 
-          <div class="weight-item">
-            <p>
-              Attendance
-              <strong id="attendanceWeightText">45%</strong>
-            </p>
-
-            <div class="weight-bar">
-              <div class="fill attendance" id="attendanceWeightBar"></div>
-            </div>
-          </div>
-
-          <div class="weight-item">
-            <p>
-              Academic Performance
-              <strong id="academicWeightText">29%</strong>
-            </p>
-
-            <div class="weight-bar">
-              <div class="fill academic" id="academicWeightBar"></div>
-            </div>
-          </div>
-
-          <div class="weight-item">
-            <p>
-              Socioeconomic Status
-              <strong id="socioWeightText">13%</strong>
-            </p>
-
-            <div class="weight-bar">
-              <div class="fill socio" id="socioWeightBar"></div>
-            </div>
-          </div>
-
-          <div class="weight-item">
-            <p>
-              Family Support
-              <strong id="familyWeightText">12%</strong>
-            </p>
-
-            <div class="weight-bar">
-              <div class="fill family" id="familyWeightBar"></div>
-            </div>
+          <div class="risk-chart-box">
+            <canvas id="riskFactorChart"></canvas>
           </div>
 
           <div class="weights-footer">
@@ -422,6 +382,8 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
