@@ -23,7 +23,7 @@ cp .env.example .env
 # Download from: https://www.kaggle.com/datasets/whenamancodes/student-performance
 # Rename to Maths.csv (or update CSV_PATH in .env)
 
-# 6. Place Person 4's ML engine files alongside main.py
+# 6. Place ML engine files alongside main.py
 #    ml_engine.py
 #    risk_engine.py
 #    recommendation_engine.py
@@ -58,7 +58,7 @@ backend/
 ├── requirements.txt
 ├── .env.example
 │
-│   # Person 4's files — place these here:
+│   # ML files — place these here:
 ├── ml_engine.py
 ├── risk_engine.py
 ├── recommendation_engine.py
