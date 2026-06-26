@@ -2,52 +2,6 @@
 EduSight — Quantum Engine
 ==========================
 Adds quantum computing capabilities to the What-If Simulator via:
-
-  1. QuantumRiskClassifier (QRC)
-     ───────────────────────────
-     A Variational Quantum Classifier trained on the student CSV dataset.
-     Encodes 4 key risk features (absences, failures, avg grade,
-     alcohol risk) as qubit rotation angles.  Learns a quantum decision
-     boundary in Hilbert space to predict dropout probability.
-
-     Why quantum for risk classification?
-       Classical models use linear/tree splits.  A VQC operates in a
-       2^n-dimensional Hilbert space, capturing non-linear interactions
-       between risk factors (e.g. high absences × past failures × low
-       grades) that shallow classical models miss.
-
-  2. QuantumInterventionOptimizer (QIO)
-     ────────────────────────────────────
-     Uses a variational quantum circuit to search the intervention space.
-     The 4 qubits encode the 4 sliders (attendance, academic, counselling,
-     welfare).  A quantum gradient descent loop drives qubit angles toward
-     the intervention combination that maximally reduces projected risk,
-     subject to a resource budget constraint.
-
-     Why quantum for intervention optimisation?
-       The slider space is a continuous combinatorial problem.  The quantum
-       circuit explores it in superposition.  Parameter-shift gradients are
-       hardware-compatible — the same code runs on real quantum hardware
-       (IBM Quantum / IonQ) once noise thresholds improve.
-
-Architecture
-────────────
-  ┌─────────────────┐     ┌─────────────────┐     ┌──────────────────────┐
-  │  risk_engine.py │────▶│ quantum_engine  │────▶│  QuantumRiskPred     │
-  │  ml_engine.py   │     │  QRC + QIO      │     │  QuantumOptimResult  │
-  └─────────────────┘     └─────────────────┘     └──────────────────────┘
-
-Linkage
-───────
-  IMPORTS FROM : risk_engine.py  (RiskEngine, StudentProfile, SimulationInput)
-                 ml_engine.py    (StudentDataLoader, AT_RISK_THRESHOLD)
-  IMPORTED BY  : test_edusight.py
-
-Dependencies
-────────────
-  pip install pennylane pennylane-lightning scikit-learn pandas numpy joblib
-
-Author : Person 4 — Data & ML Developer
 """
 
 from __future__ import annotations
