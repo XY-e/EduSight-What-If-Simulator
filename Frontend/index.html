@@ -121,6 +121,11 @@
         <div class="risk-status">
           <p>CURRENT RISK LEVEL</p>
           <span id="currentRiskLevel">▲ High Risk</span>
+
+          <button id="speakBtn" class="speak-btn" type="button" onclick="toggleSpeakNarrative()">
+            <span id="speakIcon">🔊</span>
+            <span id="speakLabel">Read report aloud</span>
+          </button>
         </div>
       </section>
 
@@ -230,7 +235,14 @@
           <div class="panel-header score-header">
             <h3>Projected Risk Score</h3>
 
-            <span class="score-title-icon">🎯</span>
+            <lottie-player
+              class="score-lottie"
+              src="animation.json"
+              background="transparent"
+              speed="1"
+              loop
+              autoplay
+            ></lottie-player>
           </div>
 
           <div class="score-box">
@@ -379,11 +391,36 @@
           </div>
         </div>
       </section>
+
+      <!-- Educational Resources (YouTube Player API) -->
+      <section class="resources-section">
+        <div class="panel resources-panel">
+          <div class="panel-header single">
+            <h3>Educational Resources</h3>
+            <span class="resources-icon">🎬</span>
+          </div>
+
+          <div class="video-wrapper">
+            <div id="ytPlayer"></div>
+          </div>
+
+          <div class="video-controls">
+            <button type="button" onclick="playVideo()">▶ Play</button>
+            <button type="button" onclick="pauseVideo()">⏸ Pause</button>
+            <button type="button" onclick="loadVideo()">↻ Reload</button>
+            <span id="ytStatus" class="yt-status">Loading player…</span>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <script src="app.js"></script>
+  <!-- YouTube IFrame Player API — calls onYouTubeIframeAPIReady() in app.js -->
+  <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

@@ -9,6 +9,91 @@ body {
   color: #1f2937;
 }
 
+.score-lottie {
+  width: 56px;
+  height: 56px;
+}
+
+.speak-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 7px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #000;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.speak-btn:hover {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.risk-status .speak-btn > span {
+  display: inline;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-weight: inherit;
+}
+
+.resources-section {
+  margin-top: 16px;
+}
+
+.resources-panel {
+  padding: 18px 20px;
+}
+
+.video-wrapper {
+  position: relative;
+  margin-top: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+
+#ytPlayer {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.video-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.video-controls button {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.video-controls button:hover {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.yt-status {
+  margin-left: auto;
+  font-size: 12px;
+  color: #6b7280;
+}
+
 .app {
   display: flex;
   min-height: 100vh;
@@ -187,6 +272,9 @@ body {
 }
 
 .risk-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   text-align: right;
 }
 

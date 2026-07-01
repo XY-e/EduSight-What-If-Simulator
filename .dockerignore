@@ -1,0 +1,15 @@
+# Keep build contexts lean by excluding these paths from every image build.
+**/venv/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/.env
+**/.env.local
+**/node_modules/
+**/*.joblib
+**/.git/
+**/.idea/
+**/.vscode/
+**/Dockerfile
+**/docker-compose.yml
+**/.dockerignore

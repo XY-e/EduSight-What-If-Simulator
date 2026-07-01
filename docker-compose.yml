@@ -1,0 +1,54 @@
+# EduSight What-If Simulator — MongoDB
+# Usage:
+#   docker compose up --build
+# URLs:
+#   Frontend     http://localhost:5173
+#   Backend API  http://localhost:8000/docs
+#   ML API       http://localhost:8001/docs
+
+services:
+  cloud_api:
+    build:
+      context: "./Data&ML_Engine"
+      dockerfile: Dockerfile
+    container_name: edusight_cloud_api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      EDUSIGHT_ENV: docker
+      EDUSIGHT_ML_MODEL_PATH: edusight_ml_model.joblib
+      EDUSIGHT_CORS_ORIGINS: http://localhost:5173,http://localhost:8000
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: edusight_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      CLOUD_API_URL: http://cloud_api:8001
+      WATCHFILES_FORCE_POLLING: "true"
+    volumes:
+      - ./backend:/app/backend
+    depends_on:
+      - cloud_api
+    command: >
+      uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: edusight_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    volumes:
+      - ./Frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend

@@ -3,11 +3,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 
-from dns.e164 import query
-from fastapi import FastAPI, HTTPException, Query
+_ML_ENGINE_DIR = Path(__file__).resolve().parent.parent / "Data&ML_Engine"
+if _ML_ENGINE_DIR.is_dir() and str(_ML_ENGINE_DIR) not in sys.path:
+    sys.path.insert(0, str(_ML_ENGINE_DIR))
+
+import httpx
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import close_db, get_collection, init_db
@@ -26,6 +32,33 @@ from risk_engine import RiskEngine, SimulationInput, Trend
 from recommendation_engine import RecommendationEngine
 
 ML_MODEL_PATH = os.getenv("ML_MODEL_PATH", "edusight_ml_model.joblib")
+CLOUD_API_URL = os.getenv("CLOUD_API_URL", "http://localhost:8001").rstrip("/")
+CLOUD_API_TIMEOUT = float(os.getenv("CLOUD_API_TIMEOUT", "5.0"))
+
+
+async def _fetch_ml_score(student_id: str, ml_data: dict | None) -> tuple[Optional[float], str]:
+    if not ml_data:
+        return None, "none"
+    try:
+        async with httpx.AsyncClient(timeout=CLOUD_API_TIMEOUT) as client:
+            resp = await client.post(
+                f"{CLOUD_API_URL}/ml/predict",
+                json={"student_id": student_id, "student_data": ml_data},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                raw = data.get("ml_risk_score")
+                if raw is None:
+                    return None, "none"
+                return float(raw), data.get("source", "cloud")
+            print(f"[ML] /ml/predict returned {resp.status_code} — using rule-based only")
+            return None, "none"
+    except (httpx.TimeoutException, httpx.ConnectError, httpx.RequestError) as e:
+        print(f"[ML] Cloud service unreachable ({type(e).__name__}); using rule-based only")
+        return None, "none"
+    except Exception as e:
+        print(f"[ML] Unexpected error calling /ml/predict: {e}")
+        return None, "none"
 
 # ---- App Lifecycle ------------------------------------------------------
 @asynccontextmanager
@@ -114,7 +147,7 @@ async def root():
     summary = "List all students with current risk scores",
 )
 async def get_students(
-    request,
+    request: Request,
     limit: int = Query(default=50, ge=1, le=200, description="Max students to return"),
     skip: int = Query(default=0, ge=0, description="Offset for pagination"),
 ):
@@ -145,7 +178,7 @@ async def get_students(
     tags = ["students"],
     summary = "Get a single student profile with current risk score",
 )
-async def get_student(request, student_id: str):
+async def get_student(request: Request, student_id: str):
     # Returns one student's profile together with the latest risk assessment.
     risk_engine, _ = _get_engines(request)
     collection = get_collection("students")
@@ -165,7 +198,7 @@ async def get_student(request, student_id: str):
     tags = ["simulation"],
     summary = "Run What-If simulation and return projected risk + recommended interventions",
 )
-async def simulate(request, body: SimulateRequest):
+async def simulate(request: Request, body: SimulateRequest):
     # Accepts the student ID and slider values from What-If Simulator.
     """
     Backend:
@@ -180,11 +213,11 @@ async def simulate(request, body: SimulateRequest):
     collection = get_collection("students")
 
     # -----  1. Fetch student  ------------------------------------------------------------
-    doc = await collection.find_one({"student_id": body.student_id}, {"_id":0})
+    doc = await collection.find_one({"student_id": body.studentId}, {"_id":0})
     if doc is None:
-        raise HTTPException(status_code=404, detail=f"Student '{body.student_id}' not found")
+        raise HTTPException(status_code=404, detail=f"Student '{body.studentId}' not found")
 
-    profile = row_to_student_profile(doc, body.student_id)
+    profile = row_to_student_profile(doc, body.studentId)
 
     # -----  2. Risk score  ---------------------------------------------------------------
     baseline_risk = risk_engine.score(profile)
@@ -213,7 +246,10 @@ async def simulate(request, body: SimulateRequest):
         sim_result = sim_result,
     )
 
-    # -----  6. Format response  -----------------------------------------------------------
+    # -----  6. Cloud ML score   -----------------------------------------------------------
+    ml_score, ml_source = await _fetch_ml_score(body.studentId, profile.ml_data)
+
+    # -----  7. Format response  -----------------------------------------------------------
     recommendations = [
         RecommendationItem(
             category = r.category.value,
@@ -238,4 +274,6 @@ async def simulate(request, body: SimulateRequest):
         narrative = report.narrative,
         weights = _format_weights(sim_result.factor_weights),
         recommendations = recommendations,
+        mlScore = ml_score,
+        mlSource = ml_source,
     )

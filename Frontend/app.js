@@ -1,9 +1,9 @@
 const API_BASE_URL = "http://localhost:8000";
 
-let selectedStudentId = "STU-001";
+let selectedStudentId = "STU-0001";
 
 let currentStudent = {
-  id: "STU-001",
+  id: "STU-0001",
   name: "Muhammad Ali bin Faisal",
   form: "Form 4 Jujur",
   school: "SMK Damansara Utama",
@@ -23,11 +23,11 @@ let riskFactorChart = null;
 document.addEventListener("DOMContentLoaded", () => {
   setupSliderListeners();
   setupStudentSearch();
+  setupSpeech();
 
-displayStudentProfile(currentStudent);
+  displayStudentProfile(currentStudent);
 
-updateSimulationUI(generateMockSimulationResult(defaultInputs));
-updateMockRecommendations();
+  loadStudentData(selectedStudentId);
 });
 
 function setupStudentSearch() {
@@ -40,7 +40,12 @@ function setupStudentSearch() {
       const studentId = searchInput.value.trim();
 
       if (!studentId) {
-        alert("Please enter a student ID.");
+        Swal.fire({
+          icon: "warning",
+          title: "Missing student ID",
+          text: "Please enter a student ID before searching.",
+          confirmButtonColor: "#3b82f6"
+        });
         return;
       }
 
@@ -80,7 +85,12 @@ async function loadStudentData(studentId = selectedStudentId) {
     const mockStudent = getMockStudentById(studentId);
 
     if (!mockStudent) {
-      alert("Student not found.");
+      Swal.fire({
+        icon: "error",
+        title: "Student not found",
+        text: `No student found with ID "${studentId}".`,
+        confirmButtonColor: "#3b82f6"
+      });
       return;
     }
 
@@ -241,6 +251,145 @@ async function runSimulation() {
     updateSimulationUI(mockResult);
     updateRecommendations(mockResult);
   }
+}
+
+// Speech Synthesis API
+let isSpeaking = false;
+let availableVoices = [];
+
+function setupSpeech() {
+  if (!("speechSynthesis" in window)) return;
+
+  loadVoices();
+  // Chrome loads voices asynchronously — reload when they arrive.
+  if (typeof speechSynthesis.onvoiceschanged !== "undefined") {
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+}
+
+function loadVoices() {
+  availableVoices = window.speechSynthesis
+    .getVoices()
+    .filter(v => v.lang && v.lang.toLowerCase().startsWith("en"));
+}
+
+function pickFemaleVoice() {
+  // Match common female-voice names across Windows / macOS / Chrome-cloud.
+  const femaleIdx = availableVoices.findIndex(v =>
+    /zira|female|samantha|karen|serena|susan|victoria|allison|kate|tessa|moira/i.test(v.name)
+  );
+  if (femaleIdx !== -1) return availableVoices[femaleIdx];
+  return availableVoices[0] || null;
+}
+
+function toggleSpeakNarrative() {
+  if (!("speechSynthesis" in window)) {
+    Swal.fire({
+      icon: "info",
+      title: "Speech not supported",
+      text: "Your browser doesn't support the Speech Synthesis API."
+    });
+    return;
+  }
+
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+    setSpeakingState(false);
+    return;
+  }
+
+  const narrative = document.getElementById("probabilityMessage").textContent.trim();
+  const projected = document.getElementById("projectedRiskText").textContent.trim();
+  const score = document.getElementById("riskScore").textContent.trim();
+
+  const phrase = `${currentStudent.name}. Projected risk score: ${score}. ${projected}. ${narrative}`;
+
+  const utterance = new SpeechSynthesisUtterance(phrase);
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  const voice = pickFemaleVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+  } else {
+    utterance.lang = "en-US";
+  }
+
+  utterance.onend = () => setSpeakingState(false);
+  utterance.onerror = () => setSpeakingState(false);
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+  setSpeakingState(true);
+}
+
+function setSpeakingState(speaking) {
+  isSpeaking = speaking;
+  const icon = document.getElementById("speakIcon");
+  const label = document.getElementById("speakLabel");
+  if (icon) icon.textContent = speaking ? "⏹️" : "🔊";
+  if (label) label.textContent = speaking ? "Stop" : "Read report aloud";
+}
+
+// Youtube Player API
+const YT_VIDEO_ID = "F23ak31YnTI";
+
+let ytPlayer;
+
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player("ytPlayer", {
+    height: "315",
+    width: "100%",
+    videoId: YT_VIDEO_ID,
+    playerVars: {
+      rel: 0,
+      modestbranding: 1,
+      playsinline: 1
+    },
+    events: {
+      onReady: onYtPlayerReady,
+      onStateChange: onYtStateChange,
+      onError: onYtError
+    }
+  });
+}
+
+function onYtPlayerReady() {
+  setYtStatus("Ready");
+}
+
+function onYtStateChange(event) {
+  const states = {
+    [-1]: "Unstarted",
+    [0]: "Ended",
+    [1]: "Playing",
+    [2]: "Paused",
+    [3]: "Buffering",
+    [5]: "Cued"
+  };
+  setYtStatus(states[event.data] || "");
+}
+
+function onYtError(event) {
+  setYtStatus(`Error (code ${event.data})`);
+}
+
+function setYtStatus(text) {
+  const el = document.getElementById("ytStatus");
+  if (el) el.textContent = text;
+}
+
+function playVideo() {
+  if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+}
+
+function pauseVideo() {
+  if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+}
+
+function loadVideo() {
+  if (ytPlayer && ytPlayer.loadVideoById) ytPlayer.loadVideoById(YT_VIDEO_ID);
 }
 
 function normalizeSimulationResult(result) {

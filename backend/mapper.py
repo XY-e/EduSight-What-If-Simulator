@@ -53,10 +53,10 @@ def famrel_to_support(famrel: float) -> float:
 def derive_trend(g1: float, g2: float, failures: int) -> Trend:
     momentum = g2 - g1
     if failures >= 2 or momentum <= -2:
-        return Trend.worsening
+        return Trend.WORSENING
     if momentum >= 2:
-        return Trend.improving
-    return Trend.stable
+        return Trend.IMPROVING
+    return Trend.STABLE
 
 # ----- Counselling / welfare -----------------------------------------------------
 default_counselling = 0

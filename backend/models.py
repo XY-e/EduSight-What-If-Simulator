@@ -39,6 +39,8 @@ class SimulateResponse(BaseModel):
     narrative: str
     weights: FactorWeights
     recommendations: list[RecommendationItem]
+    mlScore: Optional[float] = None
+    mlSource: str = "none"
 
 # ----- GET /students — response ---------------------------------------------
 class StudentSummary(BaseModel):
